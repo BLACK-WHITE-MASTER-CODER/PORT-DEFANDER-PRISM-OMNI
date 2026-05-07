@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PORT-DEFENDER | PRISM OMNI</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
+
+body, html {
+    margin: 0; padding: 0;
+    background: #050508;
+    font-family: 'Rajdhani', sans-serif;
+    overflow: hidden; color: #fff;
+}
+
+#particle-canvas {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%; z-index: 1;
+}
+
+.ui {
+    position: relative; z-index: 10;
+    height: 100vh; display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+}
+
+.title {
+    font-size: 2.5rem; font-weight: 700;
+    text-shadow: 0 0 20px cyan; margin-bottom: 20px;
+    letter-spacing: 2px;
+}
+
+.card {
+    background: rgba(0,0,0,0.6);
+    border: 1px solid cyan; padding: 30px;
+    border-radius: 20px; backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    text-align: center; transition: transform 0.2s;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
+}
+
+.ip {
+    margin: 15px 0; border: 1px dashed cyan; padding: 12px;
+    font-family: monospace; font-size: 1.2rem;
+    background: rgba(0, 255, 255, 0.05);
+}
+
+input {
+    margin: 10px 0; padding: 12px; width: 80%;
+    background: rgba(0, 0, 0, 0.5); border: 1px solid cyan;
+    color: cyan; font-family: inherit; border-radius: 5px;
+    outline: none; text-align: center;
+}
+
+.btn-row {
+    display: flex; gap: 10px; justify-content: center; margin-top: 10px;
+}
+
+button {
+    padding: 10px 20px; border: none; font-family: inherit;
+    font-weight: bold; border-radius: 5px; cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary { background: cyan; color: #000; }
+.btn-primary:hover { box-shadow: 0 0 15px cyan; transform: scale(1.05); }
+
+.btn-login {
+    width: 100%; margin-top: 20px; padding: 15px;
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid #00ff88; color: #00ff88;
+    font-family: 'Courier New', monospace; letter-spacing: 2px;
+}
+.btn-login:hover {
+    background: #00ff88; color: #000;
+    box-shadow: 0 0 20px #00ff88;
+}
+
+.boot {
+    position: absolute; width: 100%; height: 100%;
+    background: black; color: cyan;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; font-family: monospace; font-size: 1.5rem;
+}
+</style>
+</head>
+
+<body>
+
+<div class="boot" id="boot">> INITIALIZING NEXUS NODE...</div>
+
+<canvas id="particle-canvas"></canvas>
+
+<div class="ui">
+    <div class="title">PRISM OMNI CORE</div>
+
+    <div class="card" id="card">
+        <h2 id="status">SCANNING NETWORK...</h2>
+
+        <div class="ip" id="ip">prism-nexus.aternos.me</div>
+
+        <input id="custom-ip" placeholder="Target IP Override">
+
+        <div class="btn-row">
+            <button class="btn-primary" onclick="setIP()">SET IP</button>
+            <button class="btn-primary" onclick="copyIP()">COPY IP</button>
+        </div>
+
+        <button class="btn-login" onclick="window.location.href='login.html'">
+            🔐 SECURE LOGIN
+        </button>
+    </div>
+</div>
+
+<script>
+// BOOT SEQUENCE
+setTimeout(()=>boot.innerText="> BYPASSING FIREWALL...",800);
+setTimeout(()=>boot.innerText="> CONNECTION ESTABLISHED",1500);
+setTimeout(()=>boot.style.display="none",2000);
+
+// SOUND FX
+const clickSound = new Audio("https://www.soundjay.com/buttons/sounds/button-16.mp3");
+
+// COPY IP
+function copyIP(){
+    clickSound.play();
+    navigator.clipboard.writeText(ip.innerText);
+    alert("IP Copied to Clipboard!");
+}
+
+// SET IP OVERRIDE
+function setIP(){
+    clickSound.play();
+    const val = document.getElementById("custom-ip").value;
+    if(val) {
+        ip.innerText = val;
+        checkServer(); // Re-ping immediately when IP changes
+    }
+}
+
+// REAL-TIME SERVER PING (Global API)
+async function checkServer(){
+    try{
+        let res = await fetch(`https://api.mcsrvstat.us/2/${ip.innerText}`);
+        let data = await res.json();
+        
+        const statusEl = document.getElementById('status');
+        if(data.online) {
+            statusEl.innerText = `ONLINE 🟢 (${data.players.online}/${data.players.max})`;
+            statusEl.style.color = "#00ff88";
+            statusEl.style.textShadow = "0 0 10px #00ff88";
+        } else {
+            statusEl.innerText = "OFFLINE 🔴";
+            statusEl.style.color = "#ff3366";
+            statusEl.style.textShadow = "0 0 10px #ff3366";
+        }
+    }catch{
+        document.getElementById('status').innerText = "ERROR ⚠️";
+    }
+}
+setInterval(checkServer, 10000); // Checks every 10 seconds
+setTimeout(checkServer, 2000);   // Initial check after boot
+
+// 3D CARD PHYSICS & MOBILE GYRO TILT
+const card = document.getElementById("card");
+
+document.addEventListener("mousemove", e => {
+    let x = (window.innerWidth/2 - e.pageX) / 40;
+    let y = (window.innerHeight/2 - e.pageY) / 40;
+    card.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
+});
+
+window.addEventListener("deviceorientation", e => {
+    card.style.transform = `rotateY(${e.gamma/4}deg) rotateX(${e.beta/4}deg)`;
+});
+
+// OPTIMIZED MATRIX PARTICLE ENGINE
+const canvas = document.getElementById("particle-canvas");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+let particles = [];
+class Particle {
+    constructor(){
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.dx = (Math.random() - 0.5) * 1.5;
+        this.dy = (Math.random() - 0.5) * 1.5;
+    }
+    move(){
+        this.x += this.dx;
+        this.y += this.dy;
+        if(this.x < 0 || this.x > canvas.width) this.dx *= -1;
+        if(this.y < 0 || this.y > canvas.height) this.dy *= -1;
+    }
+    draw(){
+        ctx.fillStyle = "cyan";
+        ctx.fillRect(this.x, this.y, 2, 2);
+    }
+}
+
+function init(){
+    particles = [];
+    for(let i=0; i<70; i++) particles.push(new Particle());
+}
+
+function animate(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    particles.forEach((p, i) => {
+        p.move();
+        p.draw();
+        
+        // Draw connection lines
+        for(let j=i; j<particles.length; j++){
+            let dx = p.x - particles[j].x;
+            let dy = p.y - particles[j].y;
+            let dist = dx*dx + dy*dy;
+            
+            if(dist < 12000){
+                ctx.strokeStyle = `rgba(0, 255, 255, ${1 - dist/12000})`;
+                ctx.lineWidth = 0.5;
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(particles[j].x, particles[j].y);
+                ctx.stroke();
+            }
+        }
+    });
+    requestAnimationFrame(animate);
+}
+
+init();
+animate();
+
+</script>
+</body>
+</html>
